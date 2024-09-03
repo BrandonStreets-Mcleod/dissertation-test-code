@@ -164,3 +164,4 @@ cython_debug/
 
 # Ignore Prometheus files
 Prometheus/
+Kubernetes Files/data/
