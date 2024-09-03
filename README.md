@@ -14,3 +14,12 @@ This repository contains all of the code required for my dissertation
 1. Run `locust -f trafficGenerator.py` to start locust generator on http://localhost:8089. Host Address is http://localhost:8080 to point to correct microservice on Docker.
 2. Start Prometheus using `../Prometheus/prometheus --config.file=prometheus.yml`
 3. Enable port forwarding using `kubectl port-forward svc/microsvc 8080:8080`
+
+# Prometheus Queries
+`sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod
+
+# Exporting Prometheus data to CSV
+run `python3 export_csv.py http://localhost:9090 <Date begin e.g. 2022-12-14T10:00:00Z> <Date end e.g. 2022-12-14T11:30:00Z> metrics.txt`
+
+# Utilities used
+ - https://github.com/hifly81/prometheus-csvplot - created code to export from Prometheus to csv
