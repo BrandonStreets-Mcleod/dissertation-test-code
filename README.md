@@ -24,3 +24,116 @@ run `python3 export_csv.py http://localhost:9090 <Date begin e.g. 2022-12-14T10:
 
 # Utilities used
  - https://github.com/hifly81/prometheus-csvplot - created code to export from Prometheus to csv
+
+# Workload Prediction Algorithm Evolution
+
+Moving Average MSE - 3.1757106773007537
+### 1st Iteration
+Started with basic LSTM model to predict and compared with simple moving average model to set baseline.
+MSE - 7.176146507263184
+```
+def traffic_prediction_lstm():
+    model = Sequential()
+    model.add(LSTM(40, return_sequences=True, recurrent_activation='relu', input_shape=(num,1)))
+    model.add(LSTM(30, return_sequences=True, recurrent_activation='relu', input_shape=(num,1)))
+    model.add(LSTM(20, return_sequences=True, recurrent_activation='relu', input_shape=(num,1)))
+    model.add(Dense(40,activation='relu'))
+    model.add(Dense(1,activation='linear'))
+    model.compile(optimizer='adam', loss='mse')
+    model.summary()
+    return model
+```
+
+### 2nd Iteration
+What changed:
+Removed Redundant input_shape:
+
+The input_shape should only be specified in the first LSTM layer. Subsequent LSTM layers inherit the shape automatically. Removing input_shape from subsequent LSTM layers helps prevent potential issues and redundancies.
+Recurrent Activation:
+
+The recurrent_activation='relu' is not typical for LSTM cells, as they usually use sigmoid for recurrent activation. However, some variants and custom configurations might use relu. Generally, it’s best to stick with defaults unless you have a specific reason to change them.
+Added Dropout:
+
+A Dropout layer with a rate of 0.2 is added after the LSTM layers to help prevent overfitting. You can adjust the dropout rate based on your dataset and problem.
+return_sequences:
+
+In the final LSTM layer, set return_sequences=False (or omit the parameter) because you typically don’t need the full sequence output for the final dense layer, which is meant to produce a single output.
+Activation Functions:
+
+The activation functions are appropriate: relu for hidden layers and linear for the output layer. Ensure that linear is used for regression tasks.
+Compiling and Summary:
+
+Compiling the model with adam optimizer and mse loss function is correct for regression tasks. The model summary will provide a good overview of the architecture and parameters.
+MSE - 3.4495973587036133
+```
+def traffic_prediction_lstm():
+    model = Sequential()
+    # First LSTM layer with return_sequences=True to pass sequences to the next LSTM layer
+    model.add(LSTM(40, return_sequences=True, input_shape=(num, 1)))
+    # Second LSTM layer
+    model.add(LSTM(30, return_sequences=True))
+    # Third LSTM layer
+    model.add(LSTM(20))
+    # Adding a Dropout layer to prevent overfitting
+    model.add(Dropout(0.2))
+    # Dense layer for additional processing
+    model.add(Dense(40, activation='relu'))
+    # Output layer with linear activation for regression
+    model.add(Dense(1, activation='linear'))
+    # Compile the model
+    model.compile(optimizer='adam', loss='mse')
+    # Print the model summary
+    model.summary()
+    return model
+```
+
+### 3rd Iteration
+What changed
+Bidirectional LSTM:
+
+The Bidirectional wrapper allows the model to learn from both past and future data in the sequence, which can improve performance for many time series tasks.
+Increased Units and Stacked Layers:
+
+Increased the number of units in the LSTM layers to 50, 40, and 30. Adding more units can capture more complex patterns, but it may also increase the risk of overfitting. Monitor performance and adjust as needed.
+Dropout and Recurrent Dropout:
+
+Added dropout and recurrent_dropout parameters to LSTM layers to reduce overfitting. Adjust these values based on your dataset.
+Batch Normalization:
+
+Added BatchNormalization to stabilize and accelerate training by normalizing the outputs of the LSTM layers.
+Learning Rate Scheduler:
+
+ReduceLROnPlateau adjusts the learning rate when the validation loss plateaus, which can help in fine-tuning the model and improving convergence.
+MSE - 1.797590732574463
+```
+def traffic_prediction_lstm():
+    model = Sequential()
+    # Bidirectional LSTM layer
+    model.add(Bidirectional(LSTM(50, return_sequences=True, dropout=0.2, recurrent_dropout=0.2), input_shape=(num, 1)))
+    # Additional LSTM layers
+    model.add(LSTM(40, return_sequences=True, dropout=0.2, recurrent_dropout=0.2))
+    model.add(LSTM(30, return_sequences=False, dropout=0.2, recurrent_dropout=0.2))
+    # Batch Normalization
+    model.add(BatchNormalization())
+    # Dense layer with ReLU activation
+    model.add(Dense(30, activation='relu'))
+    # Output layer for regression
+    model.add(Dense(1, activation='linear'))
+    # Compile the model
+    model.compile(optimizer='adam', loss='mse')
+    # Learning Rate Scheduler
+    lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-6)
+    # Print model summary
+    model.summary()
+    return model, lr_scheduler
+```
+
+# Simple Moving Average Model
+```
+def compute_moving_average(data):
+  pred=[]
+  for i in data:
+    avg=np.sum(i)/len(i)
+    pred.append(avg)
+  return np.array(pred)
+```
