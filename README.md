@@ -17,6 +17,7 @@ This repository contains all of the code required for my dissertation
 
 # Prometheus Queries
 `sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod
+`(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-.*", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod
 
 # Exporting Prometheus data to CSV
 run `python3 export_csv.py http://localhost:9090 <Date begin e.g. 2022-12-14T10:00:00Z> <Date end e.g. 2022-12-14T11:30:00Z> metrics.txt`

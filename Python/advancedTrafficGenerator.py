@@ -13,6 +13,7 @@ class WebsiteUser(HttpUser):
 
 
 class StagesShape(LoadTestShape):
+    stop_at_end = True
     """
     A simply load test shape class that has different user and spawn_rate at
     different stages.
@@ -29,21 +30,21 @@ class StagesShape(LoadTestShape):
     """
 
     stages = [
-        {"duration": 300, "users": 1000, "spawn_rate": 100},
-        {"duration": 600, "users": 2500, "spawn_rate": 100},
-        {"duration": 360, "users": 3500, "spawn_rate": 100},
-        {"duration": 300, "users": 2000, "spawn_rate": 100},
-        {"duration": 360, "users": 1000, "spawn_rate": 100},
+        {"duration": 300, "users": 100, "spawn_rate": 10},
+        {"duration": 300, "users": 250, "spawn_rate": 10},
+        {"duration": 300, "users": 350, "spawn_rate": 10},
+        {"duration": 300, "users": 200, "spawn_rate": 10},
+        {"duration": 300, "users": 400, "spawn_rate": 10},
         {"duration": 300, "users": 500, "spawn_rate": 10},
-        {"duration": 300, "users": 2500, "spawn_rate": 100},
+        {"duration": 300, "users": 250, "spawn_rate": 10},
     ]
 
     def tick(self):
         run_time = self.get_run_time()
-
+        stage_duration = 0
         for stage in self.stages:
-            if run_time < stage["duration"]:
-                tick_data = (stage["users"], stage["spawn_rate"])
-                return tick_data
+            stage_duration += stage["duration"]
+            if run_time < stage_duration:
+                return stage["users"], stage["spawn_rate"]
 
         return None
