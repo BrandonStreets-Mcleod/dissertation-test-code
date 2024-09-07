@@ -63,7 +63,7 @@ def main():
     for metric_name in metric_names:
         print('exported metric name:' + metric_name)
         response = requests.get('{0}/api/v1/query_range'.format(prometheus_url), params={
-            'query': metric_name, 'start': sys.argv[2], 'end': sys.argv[3], 'step': '60s'}, verify=False)
+            'query': metric_name, 'start': sys.argv[2], 'end': sys.argv[3], 'step': '15s'}, verify=False)
         results = response.json()['data']['result']
 
         for result in results:

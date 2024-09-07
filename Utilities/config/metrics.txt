@@ -1,1 +1,1 @@
-sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)
+(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-.*", resource="cpu"}) by (pod)) * 100
