@@ -56,10 +56,11 @@ def main():
     write_header = True
     now = datetime.now
     # create performance directory with timestamp
-    ts_title = now().strftime('%Y-%m-%d')
+    ts_title = now().strftime('%Y-%m-%d-%H-%M-%S')
     new_folder = 'csv/metrics_' + ts_title
     mkdir(new_folder)
 
+    metric_count = 1
     for metric_name in metric_names:
         print('exported metric name:' + metric_name)
         response = requests.get('{0}/api/v1/query_range'.format(prometheus_url), params={
@@ -75,7 +76,8 @@ def main():
                 pass
 
             # create a csv file with the metric
-            csv_file_name = new_folder + '/metrics.csv'
+            csv_file_name = new_folder + "/" + str(metric_count) + '_metrics.csv'
+            metric_count = metric_count + 1
             with open(csv_file_name, 'w') as file:
                 writer = csv.writer(file)
                 if write_header:

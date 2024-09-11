@@ -18,6 +18,7 @@ This repository contains all of the code required for my dissertation
 # Prometheus Queries
 `sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod
 `(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-.*", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod
+`kube_horizontalpodautoscaler_status_current_replicas` - gets the number of replicas per HPA
 
 # Exporting Prometheus data to CSV
 run `python3 export_csv.py http://localhost:9090 <Date begin e.g. 2022-12-14T10:00:00Z> <Date end e.g. 2022-12-14T11:30:00Z> metrics.txt`
@@ -26,8 +27,6 @@ run `python3 export_csv.py http://localhost:9090 <Date begin e.g. 2022-12-14T10:
  - https://github.com/hifly81/prometheus-csvplot - created code to export from Prometheus to csv
 
 # Workload Prediction Algorithm Evolution
-
-Moving Average MSE - 3.1757106773007537
 ### 1st Iteration
 Started with basic LSTM model to predict and compared with simple moving average model to set baseline.
 MSE - 7.176146507263184
@@ -126,14 +125,4 @@ def traffic_prediction_lstm():
     # Print model summary
     model.summary()
     return model, lr_scheduler
-```
-
-# Simple Moving Average Model
-```
-def compute_moving_average(data):
-  pred=[]
-  for i in data:
-    avg=np.sum(i)/len(i)
-    pred.append(avg)
-  return np.array(pred)
 ```

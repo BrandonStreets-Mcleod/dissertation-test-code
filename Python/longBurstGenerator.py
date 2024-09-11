@@ -45,7 +45,7 @@ class RandomTrafficShape(LoadTestShape):
         return users, spawn_rate
     
     def _get_random_users_and_spawn_rate_burst(self):
-        users = random.randint(400, 600)  # Random number of users
+        users = random.randint(400, 900)  # Random number of users
         spawn_rate = random.randint(50, 100)  # Random spawn rate
         return users, spawn_rate
 
