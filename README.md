@@ -126,3 +126,30 @@ def traffic_prediction_lstm():
     model.summary()
     return model, lr_scheduler
 ```
+
+### 4th Iteration
+Added l2 regularisation
+Played with early stopping, model checkpoint, units, all hyperparameter tuning
+MSE - 0.007545528933405876
+```
+def traffic_prediction_lstm():
+    model = Sequential()
+    model.add(Bidirectional(LSTM(30, return_sequences=True, dropout=0.2, recurrent_dropout=0.2), input_shape=(num, 1)))
+    model.add(Bidirectional(LSTM(20, return_sequences=True, kernel_regularizer=l2(0.01))))
+    model.add(Bidirectional(LSTM(10, return_sequences=False, kernel_regularizer=l2(0.01))))
+    model.add(BatchNormalization())
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(1, activation='linear'))
+    model.compile(optimizer='adam', loss='mse')
+    # Learning Rate Scheduler
+    lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
+    # Print model summary
+    model.summary()
+    return model, lr_scheduler
+
+
+lstm_model, lr_scheduler = traffic_prediction_lstm()
+# Early Stopping to prevent overfitting
+early_stopping = EarlyStopping(monitor='val_loss', patience=4, restore_best_weights=True)
+model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+```
