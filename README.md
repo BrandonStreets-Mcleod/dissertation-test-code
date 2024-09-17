@@ -12,12 +12,12 @@ This repository contains all of the code required for my dissertation
 # Starting all services
 
 1. Run `locust -f trafficGenerator.py` to start locust generator on http://localhost:8089. Host Address is http://localhost:8080 to point to correct microservice on Docker.
-2. Start Prometheus using `Prometheus/prometheus --config.file=prometheus.yml`
+2. Start Prometheus using `kubectl port-forward svc/kube-prometheus-stack-1724-prometheus 9090`
 3. Enable port forwarding using `kubectl port-forward svc/microsvc 8080:8080`
 
 # Prometheus Queries
 `sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod
-`(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-.*", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod
+`(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-c76cc785b-nc7mk"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-c76cc785b-nc7mk", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod
 `kube_horizontalpodautoscaler_status_current_replicas` - gets the number of replicas per HPA
 
 # Exporting Prometheus data to CSV
