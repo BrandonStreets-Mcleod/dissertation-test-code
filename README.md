@@ -16,9 +16,11 @@ This repository contains all of the code required for my dissertation
 3. Enable port forwarding using `kubectl port-forward svc/microsvc 8080:8080`
 
 # Prometheus Queries
-`sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod
-`(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-c76cc785b-nc7mk"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-c76cc785b-nc7mk", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod
-`kube_horizontalpodautoscaler_status_current_replicas` - gets the number of replicas per HPA
+Data and time last full run: `2024-09-11 12:21:42`<br><br>
+`sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod<br><br>
+`(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-c76cc785b-nc7mk"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-c76cc785b-nc7mk", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod<br><br>
+`kube_horizontalpodautoscaler_status_current_replicas` - gets the number of replicas per HPA<br><br>
+`(kubelet_http_requests_duration_seconds_sum{path="metrics"}/kubelet_http_requests_duration_seconds_count{path="metrics"}) * 1000` - Gets response time in milliseconds<br><br>
 
 # Exporting Prometheus data to CSV
 run `python3 export_csv.py http://localhost:9090 <Date begin e.g. 2022-12-14T10:00:00Z> <Date end e.g. 2022-12-14T11:30:00Z> metrics.txt`
