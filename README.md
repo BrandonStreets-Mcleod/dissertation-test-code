@@ -156,5 +156,28 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=4, restore_best_weig
 model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 ```
 
+### 5th Iteration
+Updated the dataset used to allow for more features to be used and simplified to ensure overfitting was avoided
+
+MSE - 0.007719747722148895
+```
+def traffic_prediction_lstm():
+    model = Sequential()
+    model.add(Bidirectional(LSTM(10, return_sequences=True, recurrent_regularizer=l2(0.01)), input_shape=(window_size, len(features))))
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(1, activation='linear'))
+    model.compile(optimizer='adam', loss='mse')
+    # Learning Rate Scheduler
+    lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
+    # Print model summary
+    model.summary()
+    return model, lr_scheduler
+
+lstm_model, lr_scheduler = traffic_prediction_lstm()
+# Early Stopping to prevent overfitting
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+```
+
 ### Generating Data
 Originally used Locust but due to lack of features, developed synthetic data. This means that the data required cleaning to remove outliers. The data is now not as realistic as if it had been from a real cluster but allows for a larger timescale to be produced alongside additional features which should allow for a more accurate model as the previous data was causing overfitting on unseen data due to the lack of patterns to follow. Patterns such as increased traffic during rush hour, traffic being more prominant during high temperatures
