@@ -179,5 +179,26 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weig
 model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 ```
 
+### 6th Iteration
+Massively simplified the model as overfitting was a major issue
+```
+model = Sequential()
+model.add(LSTM(units=100, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(Dropout(0.2))
+model.add(LSTM(units=50, return_sequences=False))
+model.add(Dropout(0.2))
+model.add(Dense(prediction_steps))  # Outputting 10 future values
+
+# Early Stopping to prevent overfitting
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+# Checkppoint to ensure the best model is used - decided on best val_loss
+model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=(X_test, y_test), callbacks=[early_stopping, model_checkpoint])
+```
+
 ### Generating Data
 Originally used Locust but due to lack of features, developed synthetic data. This means that the data required cleaning to remove outliers. The data is now not as realistic as if it had been from a real cluster but allows for a larger timescale to be produced alongside additional features which should allow for a more accurate model as the previous data was causing overfitting on unseen data due to the lack of patterns to follow. Patterns such as increased traffic during rush hour, traffic being more prominant during high temperatures
