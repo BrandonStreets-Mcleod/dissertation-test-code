@@ -199,6 +199,3 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 # Train the model
 history = model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=(X_test, y_test), callbacks=[early_stopping, model_checkpoint])
 ```
-
-### Generating Data
-Originally used Locust but due to lack of features, developed synthetic data. This means that the data required cleaning to remove outliers. The data is now not as realistic as if it had been from a real cluster but allows for a larger timescale to be produced alongside additional features which should allow for a more accurate model as the previous data was causing overfitting on unseen data due to the lack of patterns to follow. Patterns such as increased traffic during rush hour, traffic being more prominant during high temperatures
