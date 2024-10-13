@@ -199,3 +199,24 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 # Train the model
 history = model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=(X_test, y_test), callbacks=[early_stopping, model_checkpoint])
 ```
+
+### 7th Iteration
+Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM 
+```
+lstm_model = Sequential()
+# Convolutional layer to capture local patterns
+lstm_model.add(Conv1D(filters=120, kernel_size=2, activation='relu', input_shape=(X_train_all.shape[1], X_train_all.shape[2])))
+lstm_model.add(Conv1D(filters=60, kernel_size=2, activation='relu'))
+lstm_model.add(MaxPooling1D(pool_size=2))
+lstm_model.add(LSTM(units=250, return_sequences=True))
+lstm_model.add(Dropout(0.2))
+lstm_model.add(LSTM(units=100, return_sequences=True))
+lstm_model.add(Dropout(0.2))
+lstm_model.add(LSTM(units=50, return_sequences=False))
+lstm_model.add(Dropout(0.2))
+lstm_model.add(Dense(prediction_horizon))
+
+# Early stopping and model checkpointing
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+```
