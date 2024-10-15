@@ -47,24 +47,15 @@ def traffic_prediction_lstm():
 
 ### 2nd Iteration
 What changed:
-Removed Redundant input_shape:
+Removed Redundant input_shape
 
-The input_shape should only be specified in the first LSTM layer. Subsequent LSTM layers inherit the shape automatically. Removing input_shape from subsequent LSTM layers helps prevent potential issues and redundancies.
-Recurrent Activation:
+The recurrent_activation='relu' removed
 
-The recurrent_activation='relu' is not typical for LSTM cells, as they usually use sigmoid for recurrent activation. However, some variants and custom configurations might use relu. Generally, it’s best to stick with defaults unless you have a specific reason to change them.
-Added Dropout:
-
-A Dropout layer with a rate of 0.2 is added after the LSTM layers to help prevent overfitting. You can adjust the dropout rate based on your dataset and problem.
-return_sequences:
+Added Dropout
 
 In the final LSTM layer, set return_sequences=False (or omit the parameter) because you typically don’t need the full sequence output for the final dense layer, which is meant to produce a single output.
-Activation Functions:
 
 The activation functions are appropriate: relu for hidden layers and linear for the output layer. Ensure that linear is used for regression tasks.
-Compiling and Summary:
-
-Compiling the model with adam optimizer and mse loss function is correct for regression tasks. The model summary will provide a good overview of the architecture and parameters.
 MSE - 3.4495973587036133
 ```
 def traffic_prediction_lstm():
@@ -90,19 +81,13 @@ def traffic_prediction_lstm():
 
 ### 3rd Iteration
 What changed
-Bidirectional LSTM:
+Bidirectional LSTM
 
-The Bidirectional wrapper allows the model to learn from both past and future data in the sequence, which can improve performance for many time series tasks.
-Increased Units and Stacked Layers:
+Increased Units and Stacked Layers
 
-Increased the number of units in the LSTM layers to 50, 40, and 30. Adding more units can capture more complex patterns, but it may also increase the risk of overfitting. Monitor performance and adjust as needed.
-Dropout and Recurrent Dropout:
-
-Added dropout and recurrent_dropout parameters to LSTM layers to reduce overfitting. Adjust these values based on your dataset.
-Batch Normalization:
+Dropout and Recurrent Dropout
 
 Added BatchNormalization to stabilize and accelerate training by normalizing the outputs of the LSTM layers.
-Learning Rate Scheduler:
 
 ReduceLROnPlateau adjusts the learning rate when the validation loss plateaus, which can help in fine-tuning the model and improving convergence.
 MSE - 1.797590732574463
@@ -219,4 +204,37 @@ lstm_model.add(Dense(prediction_horizon))
 # Early stopping and model checkpointing
 early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+```
+
+### 8th Iteration
+Added `shuffle=False` to fit to preserve time series ordinality as shuffling means that patterns based off time are lost
+```
+lstm_model = Sequential()
+
+# CNN layers
+lstm_model.add(Conv1D(filters=120, kernel_size=3, activation='relu', input_shape=(X_train_all.shape[1], X_train_all.shape[2])))
+lstm_model.add(BatchNormalization())  # Normalize activations
+lstm_model.add(Conv1D(filters=60, kernel_size=3, activation='relu'))
+lstm_model.add(BatchNormalization())  # Normalize activations
+lstm_model.add(MaxPooling1D(pool_size=2))
+
+# LSTM layers
+lstm_model.add(LSTM(units=250, return_sequences=True))
+lstm_model.add(LSTM(units=100, return_sequences=True))
+lstm_model.add(Dropout(0.3))
+lstm_model.add(LSTM(units=50, return_sequences=False))
+
+# Output layer (multi-step prediction)
+lstm_model.add(Dense(prediction_horizon))
+
+# Early stopping and model checkpointing
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', save_best_only=True, mode='min')
+# Learning rate reduction callback
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
+lstm_model.compile(optimizer="adam", loss='huber_loss')  # Use Huber loss to reduce outliers' impact
+lstm_model.summary()
+# Train the model
+history = lstm_model.fit(X_train_all, y_train_all, epochs=50, batch_size=64, validation_data=(X_test_all, y_test_all),
+                         verbose=1, callbacks=[early_stopping, model_checkpoint, reduce_lr], shuffle=False)
 ```
