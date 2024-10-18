@@ -166,6 +166,7 @@ model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbos
 
 ### 6th Iteration
 Massively simplified the model as overfitting was a major issue
+MSE: 0.000014745726148291
 ```
 model = Sequential()
 model.add(LSTM(units=100, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
@@ -186,7 +187,8 @@ history = model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=
 ```
 
 ### 7th Iteration
-Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM 
+Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM
+MSE: 3.546651451
 ```
 lstm_model = Sequential()
 # Convolutional layer to capture local patterns
@@ -208,6 +210,10 @@ model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbos
 
 ### 8th Iteration
 Added `shuffle=False` to fit to preserve time series ordinality as shuffling means that patterns based off time are lost
+MSE: 3.580630511104647
+
+#### Slight Update
+Used HalvingRandomSearchCV to run multiple different variations in a single run and get the best result of the 10 tests. Created layer for inputs rather than adding as part of first CNN layer
 ```
 lstm_model = Sequential()
 
