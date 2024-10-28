@@ -244,3 +244,92 @@ lstm_model.summary()
 history = lstm_model.fit(X_train_all, y_train_all, epochs=50, batch_size=64, validation_data=(X_test_all, y_test_all),
                          verbose=1, callbacks=[early_stopping, model_checkpoint, reduce_lr], shuffle=False)
 ```
+
+### 9th Iteration
+Made use of BayeSearch to find optimal hyperparameters for model but found no improvement from the previous models MSE
+```
+# Build the model function for Keras Tuner
+def build_model(hp):
+    model = Sequential()
+    model.add(Input(shape=(X_train_all.shape[1], X_train_all.shape[2])))
+
+    # CNN layers
+    model.add(Conv1D(filters=hp.Int('filters_1', min_value=150, max_value=200, step=10), kernel_size=hp.Int('kernel_size', 3, 5), activation='relu', kernel_regularizer=l2(1e-4)))
+    model.add(BatchNormalization())
+    model.add(Conv1D(filters=hp.Int('filters_2', min_value=50, max_value=100, step=10), kernel_size=hp.Int('kernel_size', 3, 5), activation='relu', kernel_regularizer=l2(1e-4)))
+    model.add(BatchNormalization())
+    model.add(MaxPooling1D(pool_size=2))
+
+    # LSTM layers
+    model.add(LSTM(units=hp.Int('lstm_units_1', min_value=150, max_value=300, step=50), return_sequences=True, kernel_regularizer=l2(1e-4)))
+    model.add(Dropout(hp.Float('dropout_rate', min_value=0.3, max_value=0.6, step=0.05)))
+    model.add(LSTM(units=hp.Int('lstm_units_2', min_value=80, max_value=120, step=10), return_sequences=True, kernel_regularizer=l2(1e-4)))
+    model.add(Dropout(hp.Float('dropout_rate', min_value=0.3, max_value=0.6, step=0.05)))
+    model.add(LSTM(units=hp.Int('lstm_units_3', min_value=20, max_value=60, step=10), return_sequences=False, kernel_regularizer=l2(1e-4)))
+
+    # Output layer
+    model.add(Dense(prediction_horizon, kernel_regularizer=l2(1e-4)))
+
+    # Compile the model
+    model.compile(optimizer=Adam(learning_rate=hp.Float('lr', 1e-4, 1e-3, sampling='LOG')), loss=Huber())
+
+    return model
+
+# Keras Tuner setup
+tuner = BayesianOptimization(
+    build_model,
+    objective='val_loss',
+    max_trials=20,
+    executions_per_trial=1,
+    directory='CNN-LSTM-tuning',
+    project_name='cpu_usage_tuning',
+    overwrite=True
+)
+
+# Callbacks
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+model_checkpoint = ModelCheckpoint('/kaggle/working/best_model.keras', monitor='val_loss', save_best_only=True, mode='min')
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
+
+# Perform hyperparameter tuning
+tuner.search(X_train_all, y_train_all, epochs=40, validation_data=(X_test_all, y_test_all), callbacks=[early_stopping, model_checkpoint, reduce_lr])
+
+# Retrieve the best model and its hyperparameters
+best_model = tuner.get_best_models(num_models=1)[0]
+best_hyperparameters = tuner.get_best_hyperparameters(num_trials=1)[0]
+
+print(f"Best Hyperparameters: {best_hyperparameters.values}")
+```
+
+### Final Model (best_model.keras)
+Training Validation: RMSE: 0.040890804596850176, MSE: 0.0016720579005777836
+Testing: RMSE: 17.54086680853207, MSE: 307.68200839466203
+```
+lstm_model = Sequential()
+lstm_model.add(Input(shape=(X_train_all.shape[1], X_train_all.shape[2])))
+# CNN layers
+lstm_model.add(Conv1D(filters=125, kernel_size=3, activation='relu'))
+lstm_model.add(BatchNormalization())  # Normalize activations
+lstm_model.add(Conv1D(filters=75, kernel_size=3, activation='relu'))
+lstm_model.add(BatchNormalization())  # Normalize activations
+lstm_model.add(MaxPooling1D(pool_size=2))
+# LSTM layers
+lstm_model.add(LSTM(units=175, return_sequences=True))
+lstm_model.add(Dropout(0.4))
+lstm_model.add(LSTM(units=100, return_sequences=True))
+lstm_model.add(Dropout(0.4))
+lstm_model.add(LSTM(units=50, return_sequences=False))
+# Output layer (multi-step prediction)
+lstm_model.add(Dense(prediction_horizon))
+
+# Early stopping and model checkpointing
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+model_checkpoint = ModelCheckpoint('best_model_2.keras', monitor='val_loss', save_best_only=True, mode='min')
+# Learning rate reduction callback
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
+lstm_model.compile(optimizer="adam", loss=Huber())  # Use Huber loss to reduce outliers' impact
+lstm_model.summary()
+# Train the model
+history = lstm_model.fit(X_train_all, y_train_all, epochs=50, batch_size=64, validation_data=(X_test_all, y_test_all),
+                         verbose=1, callbacks=[early_stopping, model_checkpoint, reduce_lr])
+```
