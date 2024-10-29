@@ -303,7 +303,7 @@ print(f"Best Hyperparameters: {best_hyperparameters.values}")
 
 ### Final Model (best_model.keras)
 Training Validation: RMSE: 0.040890804596850176, MSE: 0.0016720579005777836
-Testing: RMSE: 17.54086680853207, MSE: 307.68200839466203
+Testing: RMSE: 16.88054656982422, MSE: 284.952880859375
 ```
 lstm_model = Sequential()
 lstm_model.add(Input(shape=(X_train_all.shape[1], X_train_all.shape[2])))
