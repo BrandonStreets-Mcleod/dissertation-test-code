@@ -301,35 +301,34 @@ best_hyperparameters = tuner.get_best_hyperparameters(num_trials=1)[0]
 print(f"Best Hyperparameters: {best_hyperparameters.values}")
 ```
 
-### Final Model (best_model.keras)
-Training Validation: RMSE: 0.040890804596850176, MSE: 0.0016720579005777836
-Testing: RMSE: 16.88054656982422, MSE: 284.952880859375
+### Final Model (best_model_2.keras)
+Training Validation: RMSE: 0.031246100309058653, MSE: 0.0009763187845237553
+Testing: RMSE: 4.310603618621826, MSE: 18.58130355687558
 ```
-lstm_model = Sequential()
-lstm_model.add(Input(shape=(X_train_all.shape[1], X_train_all.shape[2])))
-# CNN layers
-lstm_model.add(Conv1D(filters=125, kernel_size=3, activation='relu'))
-lstm_model.add(BatchNormalization())  # Normalize activations
-lstm_model.add(Conv1D(filters=75, kernel_size=3, activation='relu'))
-lstm_model.add(BatchNormalization())  # Normalize activations
-lstm_model.add(MaxPooling1D(pool_size=2))
-# LSTM layers
-lstm_model.add(LSTM(units=175, return_sequences=True))
-lstm_model.add(Dropout(0.4))
-lstm_model.add(LSTM(units=100, return_sequences=True))
-lstm_model.add(Dropout(0.4))
-lstm_model.add(LSTM(units=50, return_sequences=False))
-# Output layer (multi-step prediction)
-lstm_model.add(Dense(prediction_horizon))
+# Build model
+lstm_model = Sequential([
+    Input(shape=(X_train.shape[1], X_train.shape[2])),
+    Conv1D(125, 3, activation='relu'),
+    BatchNormalization(),
+    Conv1D(75, 3, activation='relu'),
+    BatchNormalization(),
+    MaxPooling1D(2),
+    LSTM(175, return_sequences=True),
+    Dropout(0.4),
+    LSTM(100, return_sequences=True),
+    Dropout(0.4),
+    LSTM(50, return_sequences=False),
+    Dense(prediction_horizon)
+])
 
-# Early stopping and model checkpointing
+# Compile and train the model
 early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-model_checkpoint = ModelCheckpoint('best_model_2.keras', monitor='val_loss', save_best_only=True, mode='min')
-# Learning rate reduction callback
+model_checkpoint = ModelCheckpoint('best_model_idea.keras', monitor='val_loss', save_best_only=True, mode='min')
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
-lstm_model.compile(optimizer="adam", loss=Huber())  # Use Huber loss to reduce outliers' impact
+
+lstm_model.compile(optimizer="adam", loss=Huber())
 lstm_model.summary()
-# Train the model
-history = lstm_model.fit(X_train_all, y_train_all, epochs=50, batch_size=64, validation_data=(X_test_all, y_test_all),
+
+history = lstm_model.fit(X_train, y_train, epochs=50, batch_size=64, validation_data=(X_val, y_val),
                          verbose=1, callbacks=[early_stopping, model_checkpoint, reduce_lr])
 ```
