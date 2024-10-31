@@ -301,19 +301,18 @@ best_hyperparameters = tuner.get_best_hyperparameters(num_trials=1)[0]
 print(f"Best Hyperparameters: {best_hyperparameters.values}")
 ```
 
-### Final Model (best_model_2.keras)
-Training Validation: RMSE: 0.031246100309058653, MSE: 0.0009763187845237553
-Testing: RMSE: 4.310603618621826, MSE: 18.58130355687558
+### Final Model (best_model_idea.keras)
+Testing: RMSE: 4.226888656616211, MSE: 17.866588592529297
 ```
 # Build model
 lstm_model = Sequential([
     Input(shape=(X_train.shape[1], X_train.shape[2])),
-    Conv1D(125, 3, activation='relu'),
+    Conv1D(100, 3, activation='relu'),
     BatchNormalization(),
-    Conv1D(75, 3, activation='relu'),
+    Conv1D(50, 3, activation='relu'),
     BatchNormalization(),
     MaxPooling1D(2),
-    LSTM(175, return_sequences=True),
+    LSTM(150, return_sequences=True),
     Dropout(0.4),
     LSTM(100, return_sequences=True),
     Dropout(0.4),
