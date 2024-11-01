@@ -1,2 +1,3 @@
-(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-c76cc785b-nc7mk"}[5m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-c76cc785b-nc7mk", resource="cpu"}) by (pod)) * 100
+(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)) / (sum(kube_pod_container_resource_requests{pod=~"microsvc-.*", resource="cpu"}) by (pod)) * 100
 kube_deployment_spec_replicas{deployment='microsvc'}
+avg((sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)) / (sum(kube_pod_container_resource_requests{pod=~"microsvc-.*", resource="cpu"}) by (pod))) * 100
