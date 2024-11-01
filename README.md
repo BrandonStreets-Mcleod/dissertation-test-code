@@ -16,7 +16,6 @@ This repository contains all of the code required for my dissertation
 3. Enable port forwarding using `kubectl port-forward svc/microsvc 8080:8080`
 
 # Prometheus Queries
-Data and time last full run: `2024-09-11 12:21:42`<br><br>
 `sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod<br><br>
 `(sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-c76cc785b-nc7mk"}[10m])) by (pod)) / (sum(kube_pod_container_resource_limits{pod=~"microsvc-c76cc785b-nc7mk", resource="cpu"}) by (pod)) * 100` - gets percentage of CPU used by pod<br><br>
 `kube_horizontalpodautoscaler_status_current_replicas` - gets the number of replicas per HPA<br><br>
@@ -165,7 +164,7 @@ model_checkpoint = ModelCheckpoint('best_model.hdf5', monitor='val_loss', verbos
 ```
 
 ### 6th Iteration
-Massively simplified the model as overfitting was a major issue
+Massively simplified the model as overfitting was a major issue - used old dataset
 MSE: 0.000014745726148291
 ```
 model = Sequential()
@@ -187,7 +186,7 @@ history = model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=
 ```
 
 ### 7th Iteration
-Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM
+Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM  - used old dataset
 MSE: 3.546651451
 ```
 lstm_model = Sequential()
@@ -246,7 +245,8 @@ history = lstm_model.fit(X_train_all, y_train_all, epochs=50, batch_size=64, val
 ```
 
 ### 9th Iteration
-Made use of BayeSearch to find optimal hyperparameters for model but found no improvement from the previous models MSE
+Made use of BayeSearch to find optimal hyperparameters for model but found no improvement from the previous models MSE - new dataset was used from here. The old one was synthetic so trying to get the same accuracy using a real dataset
+RMSE: 5.2525739669799805, MSE: 27.58953285217285
 ```
 # Build the model function for Keras Tuner
 def build_model(hp):
