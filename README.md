@@ -52,24 +52,15 @@ The recurrent_activation='relu' removed
 
 Added Dropout
 
-In the final LSTM layer, set return_sequences=False (or omit the parameter) because you typically don’t need the full sequence output for the final dense layer, which is meant to produce a single output.
-
-The activation functions are appropriate: relu for hidden layers and linear for the output layer. Ensure that linear is used for regression tasks.
 MSE - 3.4495973587036133
 ```
 def traffic_prediction_lstm():
     model = Sequential()
-    # First LSTM layer with return_sequences=True to pass sequences to the next LSTM layer
     model.add(LSTM(40, return_sequences=True, input_shape=(num, 1)))
-    # Second LSTM layer
     model.add(LSTM(30, return_sequences=True))
-    # Third LSTM layer
     model.add(LSTM(20))
-    # Adding a Dropout layer to prevent overfitting
     model.add(Dropout(0.2))
-    # Dense layer for additional processing
     model.add(Dense(40, activation='relu'))
-    # Output layer with linear activation for regression
     model.add(Dense(1, activation='linear'))
     # Compile the model
     model.compile(optimizer='adam', loss='mse')
@@ -186,7 +177,7 @@ history = model.fit(X_train, y_train, epochs=20, batch_size=64, validation_data=
 ```
 
 ### 7th Iteration
-Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM  - used old dataset
+Made use of CNN-LSTM to allow for patterns to be captured by CNN and then temporal dependencies to be captured by LSTM
 MSE: 3.546651451
 ```
 lstm_model = Sequential()
@@ -245,7 +236,7 @@ history = lstm_model.fit(X_train_all, y_train_all, epochs=50, batch_size=64, val
 ```
 
 ### 9th Iteration
-Made use of BayeSearch to find optimal hyperparameters for model but found no improvement from the previous models MSE - new dataset was used from here. The old one was synthetic so trying to get the same accuracy using a real dataset
+Made use of BayeSearch to find optimal hyperparameters for model
 RMSE: 5.2525739669799805, MSE: 27.58953285217285
 ```
 # Build the model function for Keras Tuner

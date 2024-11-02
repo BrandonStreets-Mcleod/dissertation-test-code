@@ -82,7 +82,7 @@ def main():
         response = requests.get(
             '{0}/api/v1/query_range'.format(prometheus_url),
             params={
-                'query': metric_name, 'start': sys.argv[2], 'end': sys.argv[3], 'step': '15s'
+                'query': metric_name, 'start': sys.argv[2], 'end': sys.argv[3], 'step': '60s'
             },
             verify=False
         )
