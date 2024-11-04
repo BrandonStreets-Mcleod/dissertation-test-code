@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microsvc-ingress
+  namespace: default
+spec:
+  rules:
+    - host: localhost  # Use 'localhost' instead of 'microsvc.local'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: microsvc
+                port:
+                  number: 8080

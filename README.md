@@ -5,7 +5,7 @@ This repository contains all of the code required for my dissertation
 
 1. Install Helm, Docker and Git if not already done so
 2. Create a Kubernetes Cluster within Docker
-3. Created sample service deployment using https://www.techtarget.com/searchitoperations/tutorial/How-to-auto-scale-Kubernetes-pods-for-microservices to create sample microservice
+3. Created sample service deployment using https://www.techtarget.com/searchitoperations/tutorial/How-to-auto-scale-Kubernetes-pods-for-microservices to create sample microservice and create ingress controller to allow for load to be balanced between replicas
 4. Installed Prometheus Operator using Helm and this (https://github.com/prometheus-operator/kube-prometheus) using this configuation (https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#configuration)
 5. Pip install Locust from https://locust.io/
 
@@ -13,7 +13,7 @@ This repository contains all of the code required for my dissertation
 
 1. Run `locust -f trafficGenerator.py` to start locust generator on http://localhost:8089. Host Address is http://localhost:8080 to point to correct microservice on Docker.
 2. Start Prometheus using `kubectl port-forward svc/kube-prometheus-stack-1724-prometheus 9090`
-3. Enable port forwarding using `kubectl port-forward svc/microsvc 8080:8080`
+3. Enable port forwarding to ingress controller using `kubectl port-forward --namespace ingress-nginx service/ingress-nginx-controller 8080:80`
 
 # Prometheus Queries
 `sum(rate(container_cpu_usage_seconds_total{pod=~"microsvc-.*"}[5m])) by (pod)` - gets the last 5 mins of cpu usage per pod<br><br>

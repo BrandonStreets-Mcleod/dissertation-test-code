@@ -14,7 +14,6 @@ class UserTasks(TaskSet):
         self.client.get("/employee")
 
 class WebsiteUser(FastHttpUser):
-    # Adjust wait time based on burst phase
     if is_burst:
         wait_time = constant(0)  # Short wait time during bursts
     else:
@@ -22,6 +21,8 @@ class WebsiteUser(FastHttpUser):
     tasks = [UserTasks]
 
 class BurstsShape(LoadTestShape):
+    stop_at_end = True
+
     # Define the burst stages
     stages = [
         {"duration": 600, "users": 250, "spawn_rate": 50, "burst": False},  # Normal traffic
@@ -35,23 +36,23 @@ class BurstsShape(LoadTestShape):
         {"duration": 900, "users": 300, "spawn_rate": 50, "burst": False},   # Normal traffic
     ]
 
-    # Total duration of the test
-    total_test_duration = 1 * 60 * 60
-    # Total duration of the stages
+    # Calculate total test duration based on stages
     cycle_duration = sum(stage["duration"] for stage in stages)
 
     def tick(self):
         global is_burst  # Access the global burst control variable
         run_time = self.get_run_time()
-        
-        # Calculate the time within the current cycle
-        time_in_cycle = run_time % self.cycle_duration
-        
+
+        # Stop the test if the run time exceeds the cycle duration
+        if run_time >= self.cycle_duration:
+            return None
+
+        # Progress through stages based on elapsed run time
+        time_in_cycle = run_time
         for stage in self.stages:
-            stage_end_time = stage["duration"]
-            if time_in_cycle < stage_end_time:
+            if time_in_cycle < stage["duration"]:
                 is_burst = stage["burst"]
                 return (stage["users"], stage["spawn_rate"])
-            time_in_cycle -= stage_end_time
-        
+            time_in_cycle -= stage["duration"]
+
         return None
