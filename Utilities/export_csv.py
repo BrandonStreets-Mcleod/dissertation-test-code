@@ -90,14 +90,18 @@ def main():
 
         for result in results:
             # Generate filename with the specific pod name from `result`
-            csv_file_name = new_folder + "/" + generate_filename(metric_name, result, metric_count)
+            file_name = generate_filename(metric_name, result, metric_count)
+            value_header = 'cpu_usage'
+            if "replicas" in file_name:
+                value_header = 'replica_count'
+            csv_file_name = new_folder + "/" + file_name
             metric_count += 1
 
             # Write to CSV file
             with open(csv_file_name, 'w', newline='') as file:
                 writer = csv.writer(file)
                 if write_header:
-                    writer.writerow(['datetime', 'value'])
+                    writer.writerow(['datetime', value_header])
                     write_header = False
                 str_new = str(result['values']).replace("[", "").replace("]", "")
                 value_array = str_new.split(",")
