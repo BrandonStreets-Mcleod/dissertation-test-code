@@ -72,8 +72,7 @@ def main():
     now = datetime.now
 
     # Create performance directory with timestamp
-    ts_title = now().strftime('%Y-%m-%d-%H-%M-%S')
-    new_folder = '../Utilities/csv/metrics_' + ts_title
+    new_folder = '../Utilities/csv/' + sys.argv[5]
     mkdir(new_folder)
 
     metric_count = 1
