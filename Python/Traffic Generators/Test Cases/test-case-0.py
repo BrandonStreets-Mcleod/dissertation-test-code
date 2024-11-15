@@ -30,21 +30,21 @@ class StagesShape(LoadTestShape):
     """
 
     stages = [
-        {"duration": 300, "users": 100, "spawn_rate": 10},
-        {"duration": 300, "users": 250, "spawn_rate": 10},
-        {"duration": 300, "users": 350, "spawn_rate": 10},
-        {"duration": 300, "users": 200, "spawn_rate": 10},
-        {"duration": 300, "users": 100, "spawn_rate": 10},
-        {"duration": 180, "users": 600, "spawn_rate": 100},
-        {"duration": 300, "users": 100, "spawn_rate": 10},
-        {"duration": 300, "users": 200, "spawn_rate": 10},
-        {"duration": 180, "users": 500, "spawn_rate": 100},
-        {"duration": 120, "users": 250, "spawn_rate": 10},
-        {"duration": 180, "users": 200, "spawn_rate": 10},
-        {"duration": 300, "users": 100, "spawn_rate": 10},
-        {"duration": 180, "users": 500, "spawn_rate": 100},
-        {"duration": 360, "users": 100, "spawn_rate": 10},
-        {"duration": 360, "users": 300, "spawn_rate": 10},
+        {"duration": 900, "users": 100, "spawn_rate": 10},
+        {"duration": 900, "users": 250, "spawn_rate": 10},
+        {"duration": 900, "users": 350, "spawn_rate": 10},
+        {"duration": 900, "users": 200, "spawn_rate": 10},
+        {"duration": 900, "users": 100, "spawn_rate": 10},
+        {"duration": 540, "users": 600, "spawn_rate": 100},
+        {"duration": 900, "users": 100, "spawn_rate": 10},
+        {"duration": 900, "users": 200, "spawn_rate": 10},
+        {"duration": 540, "users": 500, "spawn_rate": 100},
+        {"duration": 360, "users": 250, "spawn_rate": 10},
+        {"duration": 540, "users": 200, "spawn_rate": 10},
+        {"duration": 900, "users": 100, "spawn_rate": 10},
+        {"duration": 540, "users": 500, "spawn_rate": 100},
+        {"duration": 1080, "users": 100, "spawn_rate": 10},
+        {"duration": 1080, "users": 300, "spawn_rate": 10},
     ]
 
     def tick(self):

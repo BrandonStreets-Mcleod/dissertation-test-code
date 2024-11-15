@@ -188,7 +188,7 @@ def scale_out(additional_replicas, deployment_name, namespace='default'):
     new_replicas = current_replicas + additional_replicas
     deployment.spec.replicas = new_replicas
     api.patch_namespaced_deployment(deployment_name, namespace, deployment)
-    print(f"Scaled out to {new_replicas} replicas.")
+    print(f"Scaled up to {new_replicas} replicas.")
     return new_replicas
 
 def scale_in(remove_replicas, deployment_name, namespace='default'):
@@ -198,20 +198,26 @@ def scale_in(remove_replicas, deployment_name, namespace='default'):
     new_replicas = max(current_replicas - remove_replicas, 1)
     deployment.spec.replicas = new_replicas
     api.patch_namespaced_deployment(deployment_name, namespace, deployment)
-    print(f"Scaled in to {new_replicas} replicas.")
+    print(f"Scaled down to {new_replicas} replicas.")
     return new_replicas
 
-def detect_burst(monitoring_interval, window_size, resource_prediction_model, replica_prediction_model, replicas):
+# Configurable parameters for burst detection
+rolling_window = 6  # Number of recent predictions to consider for the rolling std calculation
+std_multiplier_burst = 2  # Multiplier to determine the burst threshold
+std_multiplier_non_burst = 1.5  # Multiplier for the non-burst threshold
+
+# Function to detect burst and adjust replicas accordingly
+def detect_burst(monitoring_interval, window_size, prediction_horizon, resource_prediction_model, replica_prediction_model, replicas):
     is_burst = False
-    replicas_before_burst = 1
-    burst_threshold = 2
-    non_burst_threshold = 1.5
+    replicas_before_burst = 1  # Default number of replicas before burst detection
+    past_predictions_cpu_usage = np.array([])  # Array to store CPU usage predictions
     past_predictions = np.array([])
-    past_predictions_cpu_usage = np.array([])
+    rolling_std = 0
+
+    # Initialize scalers for feature and target scaling
     feature_scaler_burst = MinMaxScaler()
     target_scaler_burst = MinMaxScaler()
-    sd_max = 0
-    n_max = 0
+    
     while True:
         time.sleep(monitoring_interval)
         full_1h_data = get_dataset()
@@ -227,52 +233,51 @@ def detect_burst(monitoring_interval, window_size, resource_prediction_model, re
         n_predicted = replica_prediction_model.predict(predictions_rescaled.reshape(-1, 1))
         past_predictions = np.append(past_predictions, n_predicted[-1])
         past_predictions_cpu_usage = np.append(past_predictions_cpu_usage, predictions_rescaled.reshape(-1, 1)[-1])
-        for i in range(1, window_size + 1):
-            sigma_i = np.std(past_predictions_cpu_usage[-10:])
+        
+        # Keep only the last `window_size` elements for rolling calculations
+        if len(past_predictions_cpu_usage) > window_size:
+            past_predictions_cpu_usage = past_predictions_cpu_usage[-window_size:]
+        
+        if len(past_predictions_cpu_usage) >= rolling_window:
+            rolling_std = np.std(past_predictions_cpu_usage[-rolling_window:])
+            burst_threshold = std_multiplier_burst * rolling_std  # Adaptive burst threshold
+            non_burst_threshold = std_multiplier_non_burst * rolling_std  # Adaptive non-burst threshold
+        else:
+            burst_threshold = 1.0  # Default static threshold before enough data is available
+            non_burst_threshold = 0.75
 
-            if sigma_i > sd_max:
-                sd_max = sigma_i
-                n_max = max(past_predictions[-10:].flatten())
-        print(f"CPU Usage Prediction: {predictions_rescaled.reshape(-1, 1)[-1][0]}")
-        print(f"Replica Prediction: {n_predicted[-1]}")
-        print(f"STD of CPU Usage: {sigma_i}")
-        print(f"Burst Number of replicas: {n_max}")
-        if sd_max >= burst_threshold and not is_burst:
-            # Detected burst, increase replicas to n_max
-            replicas_during_burst = n_max
+        print(f"Current Burst Threshold: {burst_threshold}")
+        print(f"Current Non-Burst Threshold: {non_burst_threshold}")
+        print(f"Rolling STD: {rolling_std}")
+        if rolling_std >= burst_threshold and not is_burst:
+            print("Burst detected")
+            replicas_during_burst = max(past_predictions.flatten())  # Calculate necessary replicas
             is_burst = True
-            replicas_before_burst = n_predicted[-1]  # Store current predicted replicas before burst
-        elif sd_max >= burst_threshold and is_burst:
-            # Continuation of the burst
-            replicas_during_burst = n_max
-        elif sd_max < non_burst_threshold and is_burst:
+            replicas_before_burst = n_predicted[-1]  # Save current replicas count before scaling out
+        elif rolling_std >= burst_threshold and is_burst:
+            print("Burst Continuing")
+            replicas_during_burst = max(past_predictions.flatten())
+        elif rolling_std < non_burst_threshold and is_burst:
+            print("End of burst")
             if replicas_before_burst > n_predicted[-1]:
-                # Burst ending, scale back to predicted replicas
                 replicas_during_burst = n_predicted[-1]
                 is_burst = False
                 replicas_before_burst = 1
             else:
-                # Keep scaling at n_max
-                replicas_during_burst = n_max
+                replicas_during_burst = max(past_predictions.flatten())
         else:
-            if predictions_rescaled.reshape(-1, 1)[-1][0] >= 70 and replicas + 1 > n_predicted[-1]:
-                replicas_during_burst = replicas + 1
-            else:
-                replicas_during_burst = n_predicted[-1]
-
-        current_replica_count = int(round(replicas))
+            replicas_during_burst = past_predictions[-1]  # Use last prediction value if no burst change
+        
+        # Apply scaling logic
+        replicas = int(round(replicas))
         replicas_during_burst = int(round(replicas_during_burst))
 
-        if current_replica_count < replicas_during_burst:
-            additional_replicas = int(replicas_during_burst - current_replica_count)
-            replicas = scale_out(additional_replicas, 'microsvc', namespace='default')
-        elif current_replica_count > replicas_during_burst:
-            replica_difference = int(current_replica_count - replicas_during_burst)
-            replicas = scale_in(replica_difference, 'microsvc', namespace='default')
+        if replicas_during_burst > replicas:
+            replicas = scale_out(int(round(replicas_during_burst - replicas)), deployment_name="microsvc")
+        elif replicas_during_burst < replicas:
+            replicas = scale_in(int(round(replicas - replicas_during_burst)), deployment_name="microsvc")
         else:
-            print("No replica update needed")
-        # Log the updated replica count
-        print(f"Updated replica count: {replicas}")
+            print(f"No Update Required - Current Replicas: {replicas}")
 
 
 api = client.AppsV1Api()
@@ -281,4 +286,4 @@ replicas = deployment.spec.replicas
 print(f"Original replica count: {replicas}")
 lstm_model = load_model('best_model_idea.keras')
 best_model = joblib.load('decision_tree_model.pkl')
-detect_burst(60, 10, lstm_model, best_model, replicas)
+detect_burst(60, rolling_window, 10, lstm_model, best_model, replicas)
